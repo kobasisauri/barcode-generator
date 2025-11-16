@@ -82,7 +82,7 @@ export default function App() {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Shtrix Codes - Print</title>
+        <title></title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; background: white; padding: 20px; }
@@ -119,9 +119,16 @@ export default function App() {
             font-family: "Courier New", monospace;
             word-break: break-all;
           }
+          @page {
+            margin: 0;
+            size: auto;
+          }
           @media print {
-            body { margin: 0; padding: 10mm; }
-            .code-card { page-break-inside: avoid; }
+            * { margin: 0 !important; padding: 0 !important; }
+            html, body { margin: 0 !important; padding: 0 !important; height: 100%; }
+            body { padding: 10mm !important; }
+            .codes-container { margin: 0; padding: 0; }
+            .code-card { page-break-inside: avoid; break-inside: avoid; }
           }
         </style>
       </head>
