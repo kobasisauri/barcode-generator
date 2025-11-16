@@ -57,28 +57,97 @@ export default function App() {
     setGeneratedCodes(codes);
   };
 
-  const handleDownload = () => {
+  const handlePrintPage = () => {
     if (generatedCodes.length === 0) {
-      alert("No codes to download! Generate codes first.");
+      alert("No codes to print! Generate codes first.");
       return;
     }
 
-    const csvContent = generatedCodes.join("\n");
-    const element = document.createElement("a");
-    element.setAttribute(
-      "href",
-      "data:text/plain;charset=utf-8," + encodeURIComponent(csvContent)
-    );
-    element.setAttribute(
-      "download",
-      `shtrix-codes-${generatedCodes[0]}-to-${
-        generatedCodes[generatedCodes.length - 1]
-      }.txt`
-    );
-    element.style.display = "none";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const printWindow = window.open("", "_blank");
+    const codesHTML = generatedCodes
+      .map((code, index) => {
+        return `
+        <div class="code-card">
+          <img src="${logo}" alt="Logo" class="code-logo" />
+          <svg id="barcode-${index}" class="barcode-svg"></svg>
+          <div class="code-text">${code}</div>
+        </div>
+      `;
+      })
+      .join("");
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Shtrix Codes - Print</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; background: white; padding: 20px; }
+          .codes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(5cm, 1fr));
+            gap: 20px;
+          }
+          .code-card {
+            width: 5cm;
+            height: 2.5cm;
+            background: white;
+            text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          .code-logo {
+            width: 100%;
+            height: auto;
+            max-height: 120px;
+            object-fit: contain;
+            border-radius: 4px;
+          }
+          .barcode-svg {
+            width: 100%;
+            height: 46px;
+            display: block;
+          }
+          .code-text {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            letter-spacing: 2px;
+            font-family: "Courier New", monospace;
+            word-break: break-all;
+          }
+          @media print {
+            body { margin: 0; padding: 10mm; }
+            .code-card { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="codes-container">
+          ${codesHTML}
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          const codes = ${JSON.stringify(generatedCodes)};
+          codes.forEach((code, index) => {
+            try {
+              JsBarcode("#barcode-" + index, code, {
+                format: "CODE128",
+                width: 2,
+                height: 45,
+                displayValue: false,
+              });
+            } catch(e) { console.error("Error:", e); }
+          });
+          setTimeout(() => window.print(), 800);
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -122,25 +191,17 @@ export default function App() {
             Generate Codes
           </button>
           {generatedCodes.length > 0 && (
-            <button onClick={handleDownload} className="btn-download">
-              Download as TXT
-            </button>
+            <div className="button-group">
+              <button onClick={handlePrintPage} className="btn-print">
+                Print on New Page
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       {generatedCodes.length > 0 && (
         <div className="output-section">
-          <div className="stats">
-            <p>
-              Total codes generated: <strong>{generatedCodes.length}</strong>
-            </p>
-            <p>
-              From: <strong>{generatedCodes[0]}</strong> To:{" "}
-              <strong>{generatedCodes[generatedCodes.length - 1]}</strong>
-            </p>
-          </div>
-
           <div className="codes-container">
             {generatedCodes.map((code, index) => (
               <BarcodeCard key={index} code={code} logo={logo} />
